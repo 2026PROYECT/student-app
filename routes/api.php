@@ -8,7 +8,8 @@ use App\Http\Controllers\Api\V1\QuestionController;
 use App\Http\Controllers\Api\V1\QuestionResultController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\V1\UserController;
- 
+use App\Http\Controllers\Api\V1\QuizAssignmentController;
+
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -39,12 +40,15 @@ Route::prefix('v1')
 /*SPA -- Sanctum Token*/
 Route::middleware('auth:sanctum')
     ->group(function () {
+        Route::apiResource('quiz-assignments', QuizAssignmentController::class);
         Route::apiResource('students', UserController::class);
         Route::post('/students', [UserController::class, 'store']);
         Route::get('/students', [UserController::class, 'index']);
         Route::get('/students/{id}', [UserController::class, 'show']);
         Route::put('/students/{id}', [UserController::class, 'update']);
         Route::delete('/students/{id}', [UserController::class, 'destroy']);
+        Route::get('/students', [UserController::class, 'students']);
+
 // Route::middleware(['isAdmin'])->group(function () {
 
 

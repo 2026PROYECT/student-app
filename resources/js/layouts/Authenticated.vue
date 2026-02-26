@@ -46,6 +46,21 @@
     <span>Students</span>
   </span>
 </router-link>
+<!-- Assignments link (only for admin) -->
+<router-link v-show="user.isAdmin" :to="{ name: 'assignments.index' }" v-slot="{ isActive }">
+  <span
+    :class="[
+      'flex px-4 py-2 text-sm font-medium rounded transition items-center space-x-2',
+      isActive ? 'bg-indigo-600 text-white' : 'text-gray-900 hover:bg-gray-100'
+    ]"
+  >
+    <!-- Use solid version -->
+    <ClipboardDocumentCheckIcon class="h-5 w-5 text-indigo-600" />
+    <span>Assignments</span>
+  </span>
+</router-link>
+
+
 
 
       </nav>
@@ -90,6 +105,8 @@
 import { computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import useAuth from "@/composables/auth";
+import { ClipboardDocumentCheckIcon } from "@heroicons/vue/24/solid";
+
 
 // Correct Heroicons imports (v2)
 import { ClipboardDocumentListIcon, QuestionMarkCircleIcon } from "@heroicons/vue/24/outline";

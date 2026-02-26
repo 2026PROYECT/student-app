@@ -101,4 +101,9 @@ class UserController extends Controller
         $student->delete();
         return response()->json(null, 204);
     }
+    public function students()
+{
+    return User::where('role', 'student')->get();
+}
+
 }

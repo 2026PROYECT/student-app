@@ -96,6 +96,25 @@ const routes = [
   component: () => import("@/components/Students/Edit.vue"),
   meta: { title: "Edit Student" },
 },
+{
+  path: "/assignments",
+  name: "assignments.index",
+  component: () => import("@/components/Assignments/Index.vue"),
+  meta: { title: "Assignments" },
+},
+{
+  path: "/assignments/create",
+  name: "assignments.create",
+  component: () => import("@/components/Assignments/Create.vue"),
+  meta: { title: "Add Assignment" },
+},
+{
+  path: "/assignments/edit/:id",
+  name: "assignments.edit",
+  component: () => import("@/components/Assignments/Edit.vue"),
+  meta: { title: "Edit Assignment" },
+},
+
 
             {
                 path: "/attend-quiz/:quizId",
