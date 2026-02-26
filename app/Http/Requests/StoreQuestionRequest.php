@@ -6,27 +6,43 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreQuestionRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
+        // Allow all authenticated users (adjust if you need role-based checks)
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
+{
+    return [
+        'quiz_id'      => 'required|exists:quizzes,id',
+        'question1'    => 'nullable|string',
+        'question2'    => 'nullable|string',
+        'question3'    => 'nullable|string',
+        'picture'      => 'nullable|image|max:4048', 
+        'sound'        => 'nullable|mimes:mp3,wav,aac,ogg|max:8120',
+        'option_a'     => 'required|string',
+        'option_b'     => 'required|string',
+        'option_c'     => 'required|string',
+        'option_d'     => 'required|string',
+        'right_answer' => 'required|in:A,B,C,D',
+        'area'         => 'required|string',
+    ];
+}
+
+    public function messages(): array
     {
         return [
-            'quiz_id' => 'required|numeric',
-            'question' => 'required|string|min:1|max:255',
-            'correct_answer' => 'required|string',
-            'options' => 'required|array',
-            'options.*' => 'required|string',
+            'quiz_id.required'      => 'Quiz ID is required.',
+            'quiz_id.exists'        => 'The selected quiz does not exist.',
+            'option_a.required'     => 'Option A is required.',
+            'option_b.required'     => 'Option B is required.',
+            'option_c.required'     => 'Option C is required.',
+            'option_d.required'     => 'Option D is required.',
+            'right_answer.in'       => 'Right answer must be one of A, B, C, or D.',
+            'picture.image'         => 'Picture must be a valid image file.',
+            'sound.mimes'           => 'Sound must be an mp3 or wav file.',
         ];
     }
 }
+

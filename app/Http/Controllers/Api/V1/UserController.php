@@ -6,30 +6,40 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    // List all students (role = student)
-   public function index(Request $request)
-{
-    $query = User::where('role', 'student');
-
-    if ($request->has('search')) {
-        $search = $request->input('search');
-        $query->where(function ($q) use ($search) {
-            $q->where('name', 'like', "%{$search}%")
-              ->orWhere('lastname', 'like', "%{$search}%")
-              ->orWhere('surname', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%");
-        });
+    /**
+     * Display a listing of students with search and pagination.
+     */
+    public function index(Request $request)
+    {
+        try {
+            return User::query()
+                ->where('role', 'student')
+                ->when($request->search, function ($query, $search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                          ->orWhere('lastname', 'like', "%{$search}%")
+                          ->orWhere('email', 'like', "%{$search}%")
+                          ->orWhere('career', 'like', "%{$search}%");
+                    });
+                })
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Database error: ' . $e->getMessage()], 500);
+        }
     }
 
-    return $query->paginate(10);
+    public function students()
+{
+    return User::where('role', 'student')->get();
 }
-
-
-
-    // Create a new user (student or admin)
+    /**
+     * Store a newly created user (student or admin).
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -45,6 +55,7 @@ class UserController extends Controller
             'career'     => 'nullable|string|max:255',
             'semester'   => 'nullable|integer|min:1',
             'is_active'  => 'boolean',
+            'is_admin'   => 'boolean',
         ]);
 
         if ($request->hasFile('picture')) {
@@ -58,20 +69,28 @@ class UserController extends Controller
         return response()->json($user, 201);
     }
 
-    // Show a single user
+    /**
+     * Display the specified student.
+     */
     public function show(User $student)
     {
-        return $student;
+        return response()->json($student);
     }
 
-    // Update an existing user
+    /**
+     * Update the specified student in storage.
+     */
     public function update(Request $request, User $student)
     {
         $validated = $request->validate([
             'name'       => 'required|string|max:255',
             'lastname'   => 'nullable|string|max:255',
             'surname'    => 'nullable|string|max:255',
-            'email'      => 'required|email|unique:users,email,' . $student->id,
+            'email'      => [
+                'required', 
+                'email', 
+                Rule::unique('users')->ignore($student->id)
+            ],
             'password'   => 'nullable|string|min:6',
             'role'       => 'required|in:admin,student',
             'picture'    => 'nullable|image|max:2048',
@@ -80,14 +99,18 @@ class UserController extends Controller
             'career'     => 'nullable|string|max:255',
             'semester'   => 'nullable|integer|min:1',
             'is_active'  => 'boolean',
+            'is_admin'   => 'boolean',
         ]);
 
         if ($request->hasFile('picture')) {
             $validated['picture'] = $request->file('picture')->store('pictures', 'public');
         }
 
+        // Only update password if a new one is provided
         if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
         }
 
         $student->update($validated);
@@ -95,15 +118,12 @@ class UserController extends Controller
         return response()->json($student);
     }
 
-    // Delete a user
+    /**
+     * Remove the specified student from storage.
+     */
     public function destroy(User $student)
     {
         $student->delete();
         return response()->json(null, 204);
     }
-    public function students()
-{
-    return User::where('role', 'student')->get();
-}
-
 }

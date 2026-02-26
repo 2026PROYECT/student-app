@@ -15,4 +15,8 @@ class Quiz extends Model
     {
         return $this->hasMany(QuestionBank::class);
     }
-}
+
+public function students()
+{
+    return $this->belongsToMany(User::class, 'quiz_assignments');
+}    }

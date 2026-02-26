@@ -9,17 +9,7 @@ class QuizAssignment extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'student_id',
-        'quiz_id',
-        'finished',
-        'score',
-        'negative_marks',
-        'started_at',
-        'finished_at',
-        'time_taken',
-        'questions',
-    ];
+   protected $fillable = ['student_id', 'quiz_id', 'active'];
 
     // Relationships
     public function student()

@@ -9,29 +9,32 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('question_banks', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(Quiz::class)->constrained()->cascadeOnDelete();
+
+            // Foreign key to quizzes table
+            $table->foreignIdFor(Quiz::class)
+                  ->constrained()
+                  ->cascadeOnDelete();
 
             // Questions
             $table->text('question1')->nullable();
             $table->text('question2')->nullable();
-             $table->text('question3')->nullable();
+            $table->text('question3')->nullable();
 
+            // Media paths
+            $table->string('picture', 255)->nullable();
+            $table->string('sound', 255)->nullable();
 
-            // Media
-            $table->string('picture', 255)->nullable(); // path to image
-            $table->string('sound', 255)->nullable();   // path to audio file
-
-            // Options (can be text or picture paths)
-            $table->text('option_a')->nullable();
-            $table->text('option_b')->nullable();
-            $table->text('option_c')->nullable();
-            $table->text('option_d')->nullable();
+            // Options
+            $table->text('option_a');
+            $table->text('option_b');
+            $table->text('option_c');
+            $table->text('option_d');
 
             // Correct answer (A/B/C/D)
             $table->string('right_answer', 1);
 
-            // Area (subject area, e.g. M = Math, S = Science)
-            $table->string('area', 10)->nullable();
+            // Area (subject area, e.g. Math, Science)
+            $table->string('area', 10);
 
             $table->timestamps();
         });
@@ -41,4 +44,5 @@ return new class extends Migration {
         Schema::dropIfExists('question_banks');
     }
 };
+
 

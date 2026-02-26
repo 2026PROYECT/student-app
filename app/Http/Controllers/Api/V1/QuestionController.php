@@ -47,19 +47,26 @@ class QuestionController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreQuestionRequest $request)
-    {
-        // dd($request->all());
-        DB::beginTransaction();
-        try {
-            $data = $this->questionService->store($request);
-            DB::commit();
-            return $this->ResponseSuccess($data);
-        } catch (\Exception $e) {
-            DB::rollback();
-            return $this->ResponseError($e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine(), null, 'Data Process Error! Consult Tech Team');
-        }
+   public function store(StoreQuestionRequest $request)
+{
+    // Debug dump: see exactly what Laravel receives
+   // dd($request->all(), $request->file('picture'), $request->file('sound'));
+
+    DB::beginTransaction();
+    try {
+        $data = $this->questionService->store($request);
+        DB::commit();
+        return $this->ResponseSuccess($data);
+    } catch (\Exception $e) {
+        DB::rollback();
+        return $this->ResponseError(
+            $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine(),
+            null,
+            'Data Process Error! Consult Tech Team'
+        );
     }
+}
+
 
     /**
      * Display the specified resource.

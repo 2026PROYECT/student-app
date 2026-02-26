@@ -2,36 +2,21 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Passport\HasApiTokens;
+// This is the line that is likely missing or wrong:
+use Laravel\Sanctum\HasApiTokens; 
 
 class User extends Authenticatable
 {
-    use HasFactory, HasApiTokens, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-   protected $fillable = [
-    'name',
-    'lastname',
-    'surname',
-    'email',
-    'password',
-    'role',
-    'picture',
-    'saga_code',
-    'id_number',
-    'career',
-    'semester',
-    'is_admin',
-    'is_active',
-];
+    protected $fillable = [
+        'name', 'lastname', 'surname', 'email', 'password', 
+        'role', 'picture', 'saga_code', 'id_number', 
+        'career', 'semester', 'is_admin', 'is_active',
+    ];
 
 
 
@@ -57,4 +42,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    // Inside User.php
+public function quizzes()
+{
+    return $this->belongsToMany(Quiz::class, 'quiz_assignments');
+}
 }

@@ -9,12 +9,27 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class QuestionBank extends Model
 {
     use HasFactory;
-    protected $guarded = ['id'];
-    protected $casts = [
-        'options' => 'array',
+
+    protected $table = 'question_banks';
+
+    protected $fillable = [
+        'quiz_id',
+        'question1',
+        'question2',
+        'question3',
+        'picture',
+        'sound',
+        'option_a',
+        'option_b',
+        'option_c',
+        'option_d',
+        'right_answer',
+        'area',
     ];
-    public function quiz(): BelongsTo
+
+    public function quiz()
     {
-        return $this->belongsTo(Quiz::class);
+        return $this->belongsTo(Quiz::class, 'quiz_id');
     }
 }
+
