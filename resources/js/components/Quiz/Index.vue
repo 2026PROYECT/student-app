@@ -193,22 +193,6 @@
                         >
                             <div class="flex space-x-1">
                                 <div class="space-x-1">
-                                    <router-link
-                                        class="px-2 py-1 text-white bg-green-600 rounded-lg"
-                                        :to="{
-                                            name: 'result-quiz',
-                                            params: { quizId: quiz.id },
-                                        }"
-                                        >Show Result</router-link
-                                    >
-                                    <router-link
-                                        class="px-2 py-1 text-white rounded-lg bg-amber-400"
-                                        :to="{
-                                            name: 'attend-quiz',
-                                            params: { quizId: quiz.id },
-                                        }"
-                                        >Attend Quiz</router-link
-                                    >
                                 </div>
                                 <div class="space-x-1" v-show="user.isAdmin">
                                     <router-link

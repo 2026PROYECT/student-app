@@ -5,21 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class QuizAssignment extends Model
-{
+class QuizAssignment extends Model {
     use HasFactory;
 
-   protected $fillable = ['student_id', 'quiz_id', 'active'];
+    protected $fillable = ['student_id', 'active'];
 
-    // Relationships
-    public function student()
-    {
+   public function student() {
         return $this->belongsTo(User::class, 'student_id');
     }
 
-    public function quiz()
-    {
-        return $this->belongsTo(Quiz::class, 'quiz_id');
-    }
 }
+
+
 

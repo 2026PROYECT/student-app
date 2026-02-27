@@ -6,17 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void {
-    Schema::create('quiz_assignments', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('student_id')->constrained('users')->cascadeOnDelete();
-        $table->foreignId('quiz_id')->constrained('quizzes')->cascadeOnDelete();
-        $table->boolean('active')->default(true); // ✅ control flag
-        $table->timestamps();
+        Schema::create('quiz_assignments', function (Blueprint $table) {
+    $table->id();
+    // Reference users table, since students are stored there
+    $table->foreignId('student_id')->constrained('users')->cascadeOnDelete();
+    $table->boolean('active')->default(true);
+    $table->timestamps();
 
-        $table->unique(['student_id', 'quiz_id']); // one assignment per student per quiz
-    });
-}
+    // Prevent duplicate assignment per student
+    $table->unique('student_id');
+});
 
+    }
 
     public function down(): void {
         Schema::dropIfExists('quiz_assignments');

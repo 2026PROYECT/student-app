@@ -24,7 +24,7 @@ return new class extends Migration {
             $table->string('picture', 255)->nullable();
             $table->string('saga_code', 255)->nullable();
             $table->string('id_number', 255)->nullable();
-            $table->string('career', 255)->nullable();
+            $table->string('career_id', 255)->nullable();
             $table->integer('semester')->nullable();
 
             $table->rememberToken(); // varchar(100)

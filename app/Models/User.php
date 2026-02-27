@@ -15,7 +15,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'lastname', 'surname', 'email', 'password', 
         'role', 'picture', 'saga_code', 'id_number', 
-        'career', 'semester', 'is_admin', 'is_active',
+        'career_id', 'semester', 'is_admin', 'is_active',
     ];
 
 
@@ -47,4 +47,10 @@ public function quizzes()
 {
     return $this->belongsToMany(Quiz::class, 'quiz_assignments');
 }
+public function career()
+{
+    return $this->belongsTo(Career::class, 'career_id', 'id_career');
+}
+
+
 }

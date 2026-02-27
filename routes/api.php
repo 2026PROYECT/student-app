@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\QuizController;
 use App\Http\Controllers\Api\V1\QuestionController;
 use App\Http\Controllers\Api\V1\QuizAssignmentController;
 use App\Http\Controllers\Api\V1\QuestionResultController;
+use App\Http\Controllers\Api\V1\CareerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,9 +39,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // ✅ STUDENTS: Using apiResource covers index, store, show, update, destroy
     // This fixed the 500 error and the "Total 0" count
     Route::apiResource('students', UserController::class);
+    Route::get('/careers', [CareerController::class, 'index']);
+    Route::apiResource('users', UserController::class);
+
+
     
     // QUIZ ASSIGNMENTS
     Route::apiResource('quiz-assignments', QuizAssignmentController::class);
+
     
     // QUIZZES & QUESTIONS
     Route::apiResource('quizzes', QuizController::class);
