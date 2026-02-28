@@ -7,6 +7,10 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 // This is the line that is likely missing or wrong:
 use Laravel\Sanctum\HasApiTokens; 
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+
+
 
 class User extends Authenticatable
 {
@@ -51,6 +55,11 @@ public function career()
 {
     return $this->belongsTo(Career::class, 'career_id', 'id_career');
 }
+public function testAssignments(): HasMany
+    {
+        return $this->hasMany(TestAssignment::class);
+    }
+
 
 
 }

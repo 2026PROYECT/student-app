@@ -9,6 +9,9 @@ use App\Http\Controllers\Api\V1\QuestionController;
 use App\Http\Controllers\Api\V1\QuizAssignmentController;
 use App\Http\Controllers\Api\V1\QuestionResultController;
 use App\Http\Controllers\Api\V1\CareerController;
+use App\Http\Controllers\Api\V1\TestController;
+use App\Http\Controllers\Api\V1\TestAssignmentController;
+use App\Http\Controllers\Api\V1\ResponseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,27 +38,37 @@ Route::prefix('v1')->middleware('auth:api')->group(function () {
 
 // SPA -- Sanctum Token Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
-    
-    // ✅ STUDENTS: Using apiResource covers index, store, show, update, destroy
-    // This fixed the 500 error and the "Total 0" count
+
+    // Students
     Route::apiResource('students', UserController::class);
     Route::get('/careers', [CareerController::class, 'index']);
     Route::apiResource('users', UserController::class);
 
+    // v1 protected routes
 
-    
-    // QUIZ ASSIGNMENTS
+
+Route::get('/students', [UserController::class, 'students']);
+
+    Route::prefix('v1')->group(function () {
+        // Tests
+        Route::apiResource('tests', TestController::class);
+
+        // ✅ Full CRUD for Test Assignments
+        Route::apiResource('assignments', TestAssignmentController::class);
+
+        // Responses
+        Route::apiResource('responses', ResponseController::class);
+    });
+
+    // Quiz Assignments
     Route::apiResource('quiz-assignments', QuizAssignmentController::class);
 
-    
-    // QUIZZES & QUESTIONS
+    // Quizzes & Questions
     Route::apiResource('quizzes', QuizController::class);
-    
-    // For Questions, we use apiResource + the custom "all" route
     Route::get('questions/all', [QuestionController::class, 'all']);
     Route::apiResource('questions', QuestionController::class);
 
-    // RESULTS & ATTENDANCE
+    // Results & Attendance
     Route::post('/attend/{quizId}', [QuestionResultController::class, 'attendQuiz']);
     Route::get('/results/{quizId}', [QuestionResultController::class, 'getResults']);
 });

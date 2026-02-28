@@ -43,10 +43,11 @@ class UserController extends Controller
         }
     }
 
-    public function students()
-{
-    return User::where('role', 'student')->get();
-}
+   public function students()
+    {
+        return User::where('role', 'student')->get(['id','name']);
+    }
+
     /**
      * Store a newly created user (student or admin).
      */

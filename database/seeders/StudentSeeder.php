@@ -22,7 +22,7 @@ class StudentSeeder extends Seeder
             'picture'        => null,
             'saga_code'      => 'SAGA123',
             'id_number'      => 'STU001',
-            'career'         => 'Computer Science',
+            'career_id'         => 1,
             'semester'       => 1,
             'remember_token' => null,
         ]);

@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
             StudentSeeder::class,
             QuizAssignmentSeeder::class,
             CareerSeeder::class,
-            // QuestionBankSeeder::class,
+            TestAssignmentSeeder::class,
             // QuizResultSeeder::class
         ]);
     }

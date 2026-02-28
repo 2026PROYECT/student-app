@@ -22,7 +22,7 @@ class AdminSeeder extends Seeder
             'picture'        => null,
             'saga_code'      => null,
             'id_number'      => 'ADMIN001',
-            'career'         => null,
+            'career_id'         => null,
             'semester'       => null,
             'remember_token' => null,
         ]);

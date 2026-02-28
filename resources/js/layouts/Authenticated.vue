@@ -22,7 +22,7 @@
           </span>
         </router-link>
 
-        <!-- Question link (only for admin) -->
+        <!-- Question link (admin only) -->
         <router-link v-show="user.isAdmin" :to="{ name: 'question.index' }" v-slot="{ isActive }">
           <span
             :class="[
@@ -31,38 +31,48 @@
             ]"
           >
             <QuestionMarkCircleIcon class="h-5 w-5 text-indigo-600" />
-            <span>Question</span>
+            <span>Questions</span>
           </span>
         </router-link>
-        <!-- Students link (only for admin) -->
-<router-link v-show="user.isAdmin" :to="{ name: 'students.index' }" v-slot="{ isActive }">
-  <span
-    :class="[
-      'flex px-4 py-2 text-sm font-medium rounded transition items-center space-x-2',
-      isActive ? 'bg-indigo-600 text-white' : 'text-gray-900 hover:bg-gray-100'
-    ]"
-  >
-    <UserIcon class="h-5 w-5 text-indigo-600" />
-    <span>Students</span>
-  </span>
-</router-link>
-<!-- Assignments link (only for admin) -->
-<router-link v-show="user.isAdmin" :to="{ name: 'assignments.index' }" v-slot="{ isActive }">
-  <span
-    :class="[
-      'flex px-4 py-2 text-sm font-medium rounded transition items-center space-x-2',
-      isActive ? 'bg-indigo-600 text-white' : 'text-gray-900 hover:bg-gray-100'
-    ]"
-  >
-    <!-- Use solid version -->
-    <ClipboardDocumentCheckIcon class="h-5 w-5 text-indigo-600" />
-    <span>Assignments</span>
-  </span>
-</router-link>
 
+        <!-- Students link (admin only) -->
+        <router-link v-show="user.isAdmin" :to="{ name: 'students.index' }" v-slot="{ isActive }">
+          <span
+            :class="[
+              'flex px-4 py-2 text-sm font-medium rounded transition items-center space-x-2',
+              isActive ? 'bg-indigo-600 text-white' : 'text-gray-900 hover:bg-gray-100'
+            ]"
+          >
+            <UserIcon class="h-5 w-5 text-indigo-600" />
+            <span>Students</span>
+          </span>
+        </router-link>
 
+        <!-- Assignments link (admin only) -->
+        <router-link v-show="user.isAdmin" :to="{ name: 'assignments.index' }" v-slot="{ isActive }">
+          <span
+            :class="[
+              'flex px-4 py-2 text-sm font-medium rounded transition items-center space-x-2',
+              isActive ? 'bg-indigo-600 text-white' : 'text-gray-900 hover:bg-gray-100'
+            ]"
+          >
+            <ClipboardDocumentCheckIcon class="h-5 w-5 text-indigo-600" />
+            <span>Assignments</span>
+          </span>
+        </router-link>
 
-
+        <!-- TestOP link (admin only) -->
+        <router-link v-show="user.isAdmin" :to="{ name: 'testop.indextest' }" v-slot="{ isActive }">
+          <span
+            :class="[
+              'flex px-4 py-2 text-sm font-medium rounded transition items-center space-x-2',
+              isActive ? 'bg-indigo-600 text-white' : 'text-gray-900 hover:bg-gray-100'
+            ]"
+          >
+            <AcademicCapIcon class="h-5 w-5 text-indigo-600" />
+            <span>TestOP</span>
+          </span>
+        </router-link>
       </nav>
     </aside>
 
@@ -70,12 +80,11 @@
     <div class="flex-1 flex flex-col">
       <!-- Top Bar -->
       <header class="bg-white shadow px-6 py-4 flex justify-between items-center">
-        <!-- Dynamic Page Title -->
         <h2 class="text-xl font-semibold text-gray-800">
           {{ currentPageTitle }}
         </h2>
 
-        <!-- Login Info -->
+        <!-- User Info -->
         <div class="flex items-center">
           <div class="text-right">
             <div class="font-semibold text-gray-900">{{ user.name }}</div>
@@ -105,12 +114,10 @@
 import { computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import useAuth from "@/composables/auth";
+
+// Heroicons imports
+import { ClipboardDocumentListIcon, QuestionMarkCircleIcon, UserIcon, AcademicCapIcon } from "@heroicons/vue/24/outline";
 import { ClipboardDocumentCheckIcon } from "@heroicons/vue/24/solid";
-
-
-// Correct Heroicons imports (v2)
-import { ClipboardDocumentListIcon, QuestionMarkCircleIcon } from "@heroicons/vue/24/outline";
-import { UserIcon } from "@heroicons/vue/24/outline";
 
 const route = useRoute();
 const { user, processing, logout, getUser } = useAuth();
@@ -121,3 +128,4 @@ onMounted(() => {
   getUser();
 });
 </script>
+
