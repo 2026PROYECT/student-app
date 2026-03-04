@@ -9,9 +9,11 @@ use Illuminate\Validation\Rule;
 
 class QuizAssignmentController extends Controller
 {
+    // 1. List only activated students
     public function index(Request $request)
     {
-        $query = QuizAssignment::with('student');
+        // Removed .quiz relationship
+        $query = QuizAssignment::with(['student']);
 
         if ($request->has('search')) {
             $search = $request->input('search');
@@ -24,50 +26,57 @@ class QuizAssignmentController extends Controller
         return $query->latest()->paginate(10);
     }
 
+    // 2. Activate a student (Create record)
     public function store(Request $request)
-{
-    $request->validate([
-        'student_id' => [
-            'required',
-            Rule::exists('users', 'id')->where('role', 'student'), // ✅ only users with role=student
-            'unique:quiz_assignments,student_id'
-        ],
-        'active' => 'required|boolean',
-    ], [
-        'student_id.unique' => 'Este estudiante ya tiene una asignación registrada.'
-    ]);
+    {
+        try {
+            $request->validate([
+                'student_id' => [
+                    'required',
+                    'exists:users,id',
+                    // Changed: Now we just check if the student is ALREADY in the active list
+                    Rule::unique('quiz_assignments', 'student_id'),
+                ],
+                'active' => 'required|integer',
+            ], [
+                'student_id.unique' => 'This student is already on the active list.'
+            ]);
 
-    // ✅ Create the assignment
-    $assignment = QuizAssignment::create([
-        'student_id' => $request->student_id,
-        'active' => $request->active,
-    ]);
+            $assignment = new QuizAssignment();
+            $assignment->student_id = $request->student_id;
+            $assignment->active = $request->active;
+            // Removed $assignment->quiz_id
+            $assignment->save();
 
-    return response()->json([
-        'message' => 'Creado exitosamente!',
-        'data' => $assignment
-    ], 201);
-}
+            return response()->json(['message' => 'Student activated successfully!', 'data' => $assignment], 201);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Database error', 'details' => $e->getMessage()], 500);
+        }
+    }
 
-public function show(QuizAssignment $quizAssignment)
-{
-    return response()->json($quizAssignment->load('student'));
-}
+    // 3. Show single activation
+    public function show(QuizAssignment $quizAssignment)
+    {
+        // Removed .quiz relationship
+        return $quizAssignment->load(['student']);
+    }
 
-
-
+    // 4. Update status (Enable/Disable)
     public function update(Request $request, QuizAssignment $quizAssignment)
     {
-        $quizAssignment->update($request->only(['student_id','active']));
+        // Ensure we don't accidentally try to save quiz_id if it's in the request
+        $quizAssignment->update($request->only(['active', 'student_id']));
+        
         return response()->json($quizAssignment);
     }
 
+    // 5. Deactivate/Remove student from list
     public function destroy(QuizAssignment $quizAssignment)
     {
         $quizAssignment->delete();
         return response()->noContent();
     }
 }
-
-

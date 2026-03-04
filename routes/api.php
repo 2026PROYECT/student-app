@@ -8,11 +8,7 @@ use App\Http\Controllers\Api\V1\QuizController;
 use App\Http\Controllers\Api\V1\QuestionController;
 use App\Http\Controllers\Api\V1\QuizAssignmentController;
 use App\Http\Controllers\Api\V1\QuestionResultController;
-use App\Http\Controllers\Api\V1\CareerController;
-use App\Http\Controllers\Api\V1\TestController;
-use App\Http\Controllers\Api\V1\TestAssignmentController;
-use App\Http\Controllers\Api\V1\ResponseController;
-
+use App\Http\Controllers\Api\V1\StudentQuizController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -38,37 +34,33 @@ Route::prefix('v1')->middleware('auth:api')->group(function () {
 
 // SPA -- Sanctum Token Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
-
-    // Students
+    
+    // ✅ STUDENTS: Using apiResource covers index, store, show, update, destroy
+    // This fixed the 500 error and the "Total 0" count
     Route::apiResource('students', UserController::class);
-    Route::get('/careers', [CareerController::class, 'index']);
-    Route::apiResource('users', UserController::class);
-
-    // v1 protected routes
-
-
-Route::get('/students', [UserController::class, 'students']);
-
-    Route::prefix('v1')->group(function () {
-        // Tests
-        Route::apiResource('tests', TestController::class);
-
-        // ✅ Full CRUD for Test Assignments
-        Route::apiResource('assignments', TestAssignmentController::class);
-
-        // Responses
-        Route::apiResource('responses', ResponseController::class);
-    });
-
-    // Quiz Assignments
+    
+    // QUIZ ASSIGNMENTS
     Route::apiResource('quiz-assignments', QuizAssignmentController::class);
-
-    // Quizzes & Questions
+    
+    // QUIZZES & QUESTIONS
     Route::apiResource('quizzes', QuizController::class);
+    
+    Route::get('careers', function() {
+    return \App\Models\Career::all();
+});
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    // Student Exam Portal Routes
+    Route::get('/student/check-status', [StudentQuizController::class, 'checkStatus']);
+    Route::post('/student/generate-quiz', [StudentQuizController::class, 'generateQuiz']);
+});
+
+    // For Questions, we use apiResource + the custom "all" route
     Route::get('questions/all', [QuestionController::class, 'all']);
     Route::apiResource('questions', QuestionController::class);
 
-    // Results & Attendance
+    // RESULTS & ATTENDANCE
     Route::post('/attend/{quizId}', [QuestionResultController::class, 'attendQuiz']);
     Route::get('/results/{quizId}', [QuestionResultController::class, 'getResults']);
 });

@@ -3,23 +3,34 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\Career;
 
 class CareerSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
-        DB::table('careers')->insert([
-            ['career' => 'Ingenieria en Sistemas'],
-            ['career' => 'Ingenieria Industrial'],
-            ['career' => 'Ingenieria Civil'],
-            ['career' => 'Ingenieria Comercial'],
-            ['career' => 'Ingenieria Geografica'],
-            ['career' => 'Ingenieria Mecatronica'],
-            ['career' => 'Ingenieria Financiera'],
-            ['career' => 'Ingenieria Ambiental'],
-            ['career' => 'Ingenieria Petrolera'],
-            ['career' => 'Ingenieria Sistemas Electronicos'],
-        ]);
+        $careers = [
+            ['name' => 'Ingenieria en Sistemas'],
+            ['name' => 'Ingenieria Industrial'],
+            ['name' => 'Ingenieria Civil'],
+            ['name' => 'Ingenieria Comercial'],
+            ['name' => 'Ingenieria Geografica'],
+            ['name' => 'Ingenieria Mecatronica'],
+            ['name' => 'Ingenieria Financiera'],
+            ['name' => 'Ingenieria Ambiental'],
+            ['name' => 'Ingenieria Petrolera'],
+            ['name' => 'Ingenieria Sistemas Electronicos'],
+        ];
+
+        foreach ($careers as $career) {
+            // Using updateOrCreate prevents "Duplicate Entry" errors
+            Career::updateOrCreate(
+                ['name' => $career['name']], // Search criteria
+                $career                      // Data to insert/update
+            );
+        }
     }
 }

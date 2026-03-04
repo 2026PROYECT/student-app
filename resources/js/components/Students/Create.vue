@@ -1,223 +1,165 @@
+No need to apologize! Building the Student Create form is actually the most complex part of your user management because it handles data for two different tables (users and students) and a file upload all at once.
+
+Since we are using your 10 Engineering Careers from the seeder, this form will dynamically pull those from the database.
+
+The Complete StudentCreate.vue
+Fragmento de código
 <template>
   <div class="min-h-screen bg-gray-50/50 py-10 px-4">
     <div class="max-w-4xl mx-auto">
-      
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-8">
-        <div>
-          <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Add Student</h1>
-          <p class="text-gray-500 mt-1 text-sm">Fill in the details below to create a new student record.</p>
+      <form @submit.prevent="saveStudent" class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+        <div class="mb-8">
+          <h2 class="text-2xl font-black text-gray-900">Enroll New Student</h2>
+          <p class="text-sm text-gray-500 font-medium">Create a user account and academic profile</p>
         </div>
-        <router-link :to="{ name: 'students.index' }"
-          class="inline-flex items-center justify-center px-6 py-3 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all">
-          ← Back to Directory
-        </router-link>
-      </div>
 
-      <!-- Form -->
-      <form @submit.prevent="submit" class="space-y-6">
-        
-        <!-- Card: Basic Info -->
-        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
-          <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">First Name</label>
-            <input v-model="form.name" type="text"
-                   class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-indigo-400 transition" />
-            <p v-for="err in validationErrors?.name" class="text-red-500 text-xs mt-1">{{ err }}</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div class="space-y-4">
+            <h3 class="text-xs font-black text-indigo-500 uppercase tracking-widest ml-1">Personal Information</h3>
+            
+            <div class="flex flex-col items-center p-4 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+              <div v-if="photoPreview" class="mb-4">
+                <img :src="photoPreview" class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md" />
+              </div>
+              <label class="cursor-pointer bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-xs font-bold text-gray-600 hover:bg-gray-50">
+                {{ fileName || 'Upload Photo' }}
+                <input type="file" class="hidden" @change="handleFileUpload" accept="image/*" />
+              </label>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <input v-model="form.name" type="text" placeholder="First Name" class="form-input-custom" required />
+              <input v-model="form.lastname" type="text" placeholder="Last Name" class="form-input-custom" required />
+            </div>
+            <input v-model="form.email" type="email" placeholder="Email Address" class="form-input-custom" required />
+            <input v-model="form.password" type="password" placeholder="Account Password" class="form-input-custom" required />
           </div>
 
-          <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Lastname</label>
-            <input v-model="form.lastname" type="text"
-                   class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-indigo-400 transition" />
-            <p v-for="err in validationErrors?.lastname" class="text-red-500 text-xs mt-1">{{ err }}</p>
-          </div>
+          <div class="space-y-4">
+            <h3 class="text-xs font-black text-indigo-500 uppercase tracking-widest ml-1">Academic Profile</h3>
+            
+            <div>
+              <label class="text-[10px] font-black text-gray-400 uppercase ml-2">Career / Engineering</label>
+              <select v-model="form.career_id" class="form-input-custom" required>
+                <option value="" disabled>Select Career</option>
+                <option v-for="career in careers" :key="career.id" :value="career.id">
+                  {{ career.name }}
+                </option>
+              </select>
+            </div>
 
-          <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Surname</label>
-            <input v-model="form.surname" type="text"
-                   class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-indigo-400 transition" />
-            <p v-for="err in validationErrors?.surname" class="text-red-500 text-xs mt-1">{{ err }}</p>
-          </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-[10px] font-black text-gray-400 uppercase ml-2">Semester</label>
+                <select v-model="form.semester" class="form-input-custom">
+                  <option v-for="n in 10" :key="n" :value="n">{{ n }}° Semester</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] font-black text-gray-400 uppercase ml-2">SAGA Code</label>
+                <input v-model="form.saga_code" type="text" placeholder="e.g. 12345" class="form-input-custom" />
+              </div>
+            </div>
 
-          <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Email</label>
-            <input v-model="form.email" type="email"
-                   class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-indigo-400 transition" />
-            <p v-for="err in validationErrors?.email" class="text-red-500 text-xs mt-1">{{ err }}</p>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Password</label>
-            <input v-model="form.password" type="password"
-                   class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-indigo-400 transition" />
-            <p v-for="err in validationErrors?.password" class="text-red-500 text-xs mt-1">{{ err }}</p>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Role</label>
-            <select v-model="form.role"
-                    class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-indigo-400 transition">
-              <option disabled value="">-- Select Role --</option>
-              <option value="admin">Admin</option>
-              <option value="student">Student</option>
-            </select>
-            <p v-for="err in validationErrors?.role" class="text-red-500 text-xs mt-1">{{ err }}</p>
+            <div>
+              <label class="text-[10px] font-black text-gray-400 uppercase ml-2">National ID / CI</label>
+              <input v-model="form.id_number" type="text" placeholder="Identity Number" class="form-input-custom" />
+            </div>
           </div>
         </div>
 
-        <!-- Card: Picture -->
-        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-          <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Picture</label>
-          <input type="file" accept="image/*" @change="handlePicture"
-                 class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
-                        file:rounded-full file:border-0 file:text-sm file:font-semibold
-                        file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
-          <p v-for="err in validationErrors?.picture" class="text-red-500 text-xs mt-1">{{ err }}</p>
-
-          <!-- Preview -->
-          <div v-if="previewUrl" class="mt-4">
-            <img :src="previewUrl" alt="Preview"
-                 class="h-24 w-24 object-cover rounded-xl border border-gray-100 shadow-sm" />
-          </div>
+        <div v-if="Object.keys(validationErrors).length > 0" class="mt-8 p-4 bg-red-50 rounded-2xl text-red-600 text-sm">
+          <ul class="list-disc list-inside">
+            <li v-for="(errors, field) in validationErrors" :key="field">{{ errors[0] }}</li>
+          </ul>
         </div>
 
-        <!-- Card: Additional Info -->
-        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
-          <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">SAGA Code</label>
-            <input v-model="form.saga_code" type="text"
-                   class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-indigo-400 transition" />
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">ID Number</label>
-            <input v-model="form.id_number" type="text"
-                   class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-indigo-400 transition" />
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Career</label>
-            <select v-model="form.career_id"
-                    class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-indigo-400 transition">
-              <option disabled value="">-- Select Career --</option>
-              <option v-for="career in careers" :key="career.id_career" :value="career.id_career">
-                {{ career.career }}
-              </option>
-            </select>
-            <p v-for="err in validationErrors?.career_id" class="text-red-500 text-xs mt-1">{{ err }}</p>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Semester</label>
-            <select v-model="form.semester"
-                    class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-indigo-400 transition">
-              <option disabled value="">-- Select Semester --</option>
-              <option v-for="n in 10" :key="n" :value="n">{{ n }}</option>
-            </select>
-            <p v-for="err in validationErrors?.semester" class="text-red-500 text-xs mt-1">{{ err }}</p>
-          </div>
+        <div class="mt-10 flex gap-4">
+          <button type="submit" :disabled="processing" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 transition disabled:opacity-50">
+            {{ processing ? 'Processing...' : 'Register Student' }}
+          </button>
+          <router-link :to="{ name: 'students.index' }" class="px-8 py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold hover:bg-gray-200 transition">
+            Cancel
+          </router-link>
         </div>
-
-        <!-- Submit -->
-        <button type="submit" :disabled="isLoading"
-                class="group relative w-full flex justify-center py-5 px-4 border border-transparent
-                       text-lg font-bold rounded-3xl text-white bg-indigo-600 hover:bg-indigo-700
-                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
-                       transition-all shadow-xl shadow-indigo-200 disabled:opacity-50">
-          {{ isLoading ? "Saving..." : "Save Student" }}
-        </button>
       </form>
     </div>
   </div>
 </template>
-<script>
-import { ref, reactive, onMounted } from "vue";
-import { useRouter } from "vue-router"; // 1. Add this import
-import axios from "axios";
 
-export default {
-  name: "StudentsCreate",
-  setup() {
-    const router = useRouter(); // 2. Initialize the router instance
-    const isLoading = ref(false);
-    const validationErrors = ref({});
-    const careers = ref([]);
-    const previewUrl = ref(null);
+<script setup>
+import { reactive, ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import axios from 'axios';
+import Swal from 'sweetalert2';
 
-    const form = reactive({
-      name: "",
-      lastname: "",
-      surname: "",
-      email: "",
-      password: "",
-      role: "",
-      picture: null,
-      saga_code: "",
-      id_number: "",
-      career_id: "",
-      semester: 1,
+const router = useRouter();
+const careers = ref([]);
+const processing = ref(false);
+const validationErrors = ref({});
+const photoPreview = ref(null);
+const fileName = ref('');
+
+const form = reactive({
+  name: '',
+  lastname: '',
+  email: '',
+  password: '',
+  role: 'student', // Must be 'student'
+  career_id: '',
+  semester: 1,
+  saga_code: '',
+  id_number: '',
+  picture: null
+});
+
+onMounted(async () => {
+  try {
+    const response = await axios.get('/api/careers');
+    careers.value = response.data;
+  } catch (e) {
+    console.error("Could not load careers");
+  }
+});
+
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    form.picture = file;
+    fileName.value = file.name;
+    photoPreview.value = URL.createObjectURL(file);
+  }
+};
+
+const saveStudent = async () => {
+  processing.value = true;
+  validationErrors.value = {};
+
+  const formData = new FormData();
+  // Append everything to FormData
+  Object.keys(form).forEach(key => {
+    if (form[key] !== null) formData.append(key, form[key]);
+  });
+
+  try {
+    await axios.post('/api/students', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
-
-    const handlePicture = (event) => {
-      const file = event.target.files[0];
-      form.picture = file;
-      if (file) {
-        // Clean up memory if a preview already existed
-        if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
-        previewUrl.value = URL.createObjectURL(file);
-      }
-    };
-
-    const submit = async () => {
-      if (isLoading.value) return;
-      isLoading.value = true;
-      validationErrors.value = {};
-
-      try {
-        const formData = new FormData();
-        Object.keys(form).forEach((key) => {
-          formData.append(key, form[key]);
-        });
-
-        await axios.post("/api/users", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-
-        // 3. This is the redirect logic
-        // If your route is defined as { name: 'students.index', path: '/students' ... }
-        router.push({ name: 'students.index' }); 
-        
-        // OR if you don't use names, use the path:
-        // router.push('/students');
-
-      } catch (error) {
-        if (error.response?.data?.errors) {
-          validationErrors.value = error.response.data.errors;
-        }
-      } finally {
-        isLoading.value = false;
-      }
-    };
-
-    onMounted(async () => {
-      try {
-        const { data } = await axios.get("/api/careers");
-        careers.value = data;
-      } catch (e) {
-        console.error("Failed to load careers");
-      }
-    });
-
-    return {
-      form,
-      isLoading,
-      validationErrors,
-      handlePicture,
-      submit,
-      careers,
-      previewUrl,
-    };
-  },
+    
+    Swal.fire('Success', 'Student registered successfully', 'success');
+    router.push({ name: 'students.index' });
+  } catch (e) {
+    if (e.response?.data?.errors) {
+      validationErrors.value = e.response.data.errors;
+    }
+  } finally {
+    processing.value = false;
+  }
 };
 </script>
+
+<style scoped>
+.form-input-custom {
+  @apply w-full border-none bg-gray-50 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-400 font-bold text-gray-700 placeholder-gray-300 transition-all;
+}
+</style>

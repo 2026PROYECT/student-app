@@ -11,21 +11,16 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         User::create([
-            'name'           => 'System',
-            'lastname'       => 'Administrator',
-            'surname'        => null,
-            'email'          => 'admin@test.com',
-            'password'       => Hash::make('pass1234'),
-            'role'           => 'admin',
-            'is_admin'       => 1,
-            'is_active'      => 1,
-            'picture'        => null,
-            'saga_code'      => null,
-            'id_number'      => 'ADMIN001',
-            'career_id'         => null,
-            'semester'       => null,
-            'remember_token' => null,
+            'name'      => 'System',
+            'lastname'  => 'Administrator',
+            'surname'   => null,
+            'email'     => 'admin@test.com',
+            'password'  => Hash::make('pass1234'),
+            'role'      => 'admin',
+            'picture'   => null,
+            // These stay here if you kept them in the users migration:
+            // 'is_admin'  => 1, 
+            // 'is_active' => 1,
         ]);
     }
 }
-

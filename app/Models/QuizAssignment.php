@@ -5,16 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class QuizAssignment extends Model {
+class QuizAssignment extends Model
+{
     use HasFactory;
+
+    // Explicitly define the table name to match your DB
+    protected $table = 'quiz_assignments';
 
     protected $fillable = ['student_id', 'active'];
 
-   public function student() {
+    public function student()
+    {
         return $this->belongsTo(User::class, 'student_id');
     }
-
 }
-
-
-

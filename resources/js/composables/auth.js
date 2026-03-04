@@ -16,77 +16,103 @@ export default function useAuth() {
 
     const user = reactive({
         name: "",
+        lastname: "", // Added to match your user profile
         email: "",
+        role: "",     // Added for role-based logic
         isAdmin: false,
     });
 
- const submitLogin = async () => {
-  if (processing.value) return;
-
-  processing.value = true;
-  validationErrors.value = {};
-
-  try {
-    await axios.get("/sanctum/csrf-cookie"); // CSRF cookie
-    await axios.post("/login", loginForm);   // login
-    const response = await axios.get("/api/user"); // fetch user
-    loginUser(response.data);                // store user
-  } catch (error) {
-    if (error.response?.data) {
-      validationErrors.value = error.response.data.errors;
-    }
-  } finally {
-    processing.value = false;
-  }
-};
-
     const loginUser = (data) => {
-  user.name = data.name;
-  user.email = data.email;
-  user.isAdmin = data.is_admin;
-  localStorage.setItem("loggedIn", JSON.stringify(true));
-  router.push({ name: "quiz.index" });
-};
+        // 1. Update the reactive user object
+        user.name = data.name;
+        user.lastname = data.lastname;
+        user.email = data.email;
+        user.role = data.role;
+        user.isAdmin = data.role === 'admin' || data.is_admin === true;
 
+        // 2. Persist to localStorage for Route Guards
+        localStorage.setItem("loggedIn", JSON.stringify(true));
+        localStorage.setItem("user_data", JSON.stringify(data));
+
+        // 3. Role-Based Redirect
+        // Only redirect if we are currently on the login page
+        if (router.currentRoute.value.name === 'login') {
+            if (user.isAdmin) {
+                router.push({ name: "assignments.index" });
+            } else {
+                router.push({ name: "attend.index" });
+            }
+        }
+    };
+
+    const submitLogin = async () => {
+        if (processing.value) return;
+
+        processing.value = true;
+        validationErrors.value = {};
+
+        try {
+            await axios.get("/sanctum/csrf-cookie");
+            await axios.post("/login", loginForm);
+            const response = await axios.get("/api/user");
+            loginUser(response.data);
+        } catch (error) {
+            if (error.response?.data?.errors) {
+                validationErrors.value = error.response.data.errors;
+            } else if (error.response?.status === 401) {
+                swal({
+                    icon: "error",
+                    title: "Access Denied",
+                    text: "Invalid email or password.",
+                });
+            }
+        } finally {
+            processing.value = false;
+        }
+    };
 
     const logout = async () => {
         if (processing.value) return;
-
         processing.value = true;
 
         try {
             await axios.post("/logout");
+            // Clean up localStorage
+            localStorage.removeItem("loggedIn");
+            localStorage.removeItem("user_data");
+            
+            // Reset reactive state
+            user.name = "";
+            user.role = "";
+            user.isAdmin = false;
+
             router.push({ name: "login" });
         } catch (error) {
-            swal({
-                icon: "error",
-                title: error.response.status,
-                text: error.response.statusText,
-            });
+            console.error("Logout failed", error);
         } finally {
             processing.value = false;
         }
     };
 
     const getUser = async () => {
-  try {
-    const response = await axios.get("/api/user");
-    loginUser(response.data);
-  } catch (error) {
-    console.error("Unauthorized:", error.response?.status);
-  }
-};
+        try {
+            const response = await axios.get("/api/user");
+            loginUser(response.data);
+        } catch (error) {
+            if (error.response?.status === 401) {
+                localStorage.removeItem("loggedIn");
+                localStorage.removeItem("user_data");
+            }
+        }
+    };
 
-return {
-  loginForm,
-  validationErrors,
-  processing,
-  submitLogin,
-  user,
-  logout,
-  getUser, // <-- add back here
-};
-
-
+    return {
+        loginForm,
+        validationErrors,
+        processing,
+        submitLogin,
+        user,
+        logout,
+        getUser,
+    };
 }
-

@@ -1,200 +1,194 @@
 <template>
   <div class="min-h-screen bg-gray-50/50 py-10 px-4">
-    <div class="max-w-4xl mx-auto">
-      
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-8">
-        <div>
-          <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Edit Student</h1>
-          <p class="text-gray-500 mt-1 text-sm">Update student details below.</p>
-        </div>
-        <router-link :to="{ name: 'students.index' }"
-          class="inline-flex items-center justify-center px-6 py-3 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all">
-          ← Back to Directory
-        </router-link>
-      </div>
+    <div v-if="loading" class="flex flex-col items-center justify-center py-20">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <p class="mt-4 text-gray-500 font-bold">Loading student details...</p>
+    </div>
 
-      <!-- Form -->
-      <form @submit.prevent="submit" class="space-y-6">
-        
-        <!-- Card: Basic Info -->
-        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
-          <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">First Name</label>
-            <input v-model="form.name" type="text"
-                   class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-indigo-400 transition" />
-            <p v-for="err in validationErrors?.name" class="text-red-500 text-xs mt-1">{{ err }}</p>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Email</label>
-            <input v-model="form.email" type="email"
-                   class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-indigo-400 transition" />
-            <p v-for="err in validationErrors?.email" class="text-red-500 text-xs mt-1">{{ err }}</p>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Role</label>
-            <select v-model="form.role"
-                    class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-indigo-400 transition">
-              <option disabled value="">-- Select Role --</option>
-              <option value="admin">Admin</option>
-              <option value="student">Student</option>
-            </select>
-            <p v-for="err in validationErrors?.role" class="text-red-500 text-xs mt-1">{{ err }}</p>
-          </div>
+    <div v-else class="max-w-4xl mx-auto">
+      <form @submit.prevent="updateStudent" class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+        <div class="mb-8">
+          <h2 class="text-2xl font-black text-gray-900">Edit Student Profile</h2>
+          <p class="text-sm text-gray-500 font-medium">Update academic and personal information</p>
         </div>
 
-        <!-- Card: Picture -->
-        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-          <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Picture</label>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div class="space-y-4">
+            <h3 class="text-xs font-black text-indigo-500 uppercase tracking-widest ml-1">Personal Info</h3>
 
-          <!-- Old picture -->
-          <div v-if="picturePreview && typeof picturePreview === 'string'" class="mb-4">
-            <img :src="'/storage/' + picturePreview" class="h-32 w-full object-cover rounded-2xl border border-gray-100">
-                 
-            <p class="text-[10px] text-gray-400 mt-2 text-center uppercase tracking-tighter">Current Image</p>
-          </div>
-          <!-- File input -->
-          <input type="file" accept="image/*"
-                 @change="handlePicture"
-                 class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
-                        file:rounded-full file:border-0 file:text-sm file:font-semibold
-                        file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+            <div class="flex flex-col items-center p-4 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+              <div class="mb-4 relative">
+                <img v-if="photoPreview || currentPicture" 
+                     :src="photoPreview || '/storage/' + currentPicture"
+                     class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md" />
+                <div v-else class="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center">
+                  <span class="text-indigo-600 font-bold text-xl">{{ form.name[0] }}</span>
+                </div>
+              </div>
+              <label class="cursor-pointer bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-xs font-bold text-gray-600 hover:bg-gray-50 transition">
+                Change Photo
+                <input type="file" class="hidden" @change="handleFileUpload" accept="image/*" />
+              </label>
+            </div>
 
-          <!-- New preview -->
-          <div v-if="form.picture && form.picture instanceof File" class="mt-2">
-            <img :src="URL.createObjectURL(form.picture)"
-                 class="h-24 w-24 object-cover rounded-xl border border-gray-100 shadow-sm" />
-          </div>
-
-          <p v-for="err in validationErrors?.picture" class="text-red-500 text-xs mt-1">{{ err }}</p>
-        </div>
-
-        <!-- Card: Career & Semester -->
-        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
-          <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Career</label>
-            <select v-model="form.career_id"
-                    class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-indigo-400 transition">
-              <option disabled value="">-- Select Career --</option>
-              <option v-for="career in careers" :key="career.id_career" :value="career.id_career">
-                {{ career.career }}
-              </option>
-            </select>
-            <p v-for="err in validationErrors?.career_id" class="text-red-500 text-xs mt-1">{{ err }}</p>
+            <div class="grid grid-cols-2 gap-4">
+              <input v-model="form.name" type="text" placeholder="First Name" class="form-input-custom" />
+              <input v-model="form.lastname" type="text" placeholder="Last Name" class="form-input-custom" />
+            </div>
+            <input v-model="form.email" type="email" placeholder="Email" class="form-input-custom" />
           </div>
 
-          <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Semester</label>
-            <select v-model="form.semester"
-                    class="w-full bg-gray-50 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-indigo-400 transition">
-              <option disabled value="">-- Select Semester --</option>
-              <option v-for="n in 10" :key="n" :value="n">{{ n }}</option>
-            </select>
-            <p v-for="err in validationErrors?.semester" class="text-red-500 text-xs mt-1">{{ err }}</p>
+          <div class="space-y-4">
+            <h3 class="text-xs font-black text-indigo-500 uppercase tracking-widest ml-1">Academic Info</h3>
+            <div>
+              <label class="text-[10px] font-black text-gray-400 uppercase ml-2">Engineering Career</label>
+              <select v-model="form.career_id" class="form-input-custom">
+                <option value="">Select Career</option>
+                <option v-for="c in careers" :key="c.id" :value="c.id">{{ c.name }}</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-[10px] font-black text-gray-400 uppercase ml-2">Semester</label>
+                <select v-model="form.semester" class="form-input-custom">
+                  <option v-for="n in 10" :key="n" :value="n">{{ n }}° Semester</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] font-black text-gray-400 uppercase ml-2">SAGA Code</label>
+                <input v-model="form.saga_code" type="text" placeholder="SAGA" class="form-input-custom" />
+              </div>
+            </div>
+
+            <div>
+              <label class="text-[10px] font-black text-gray-400 uppercase ml-2">Identity Number (CI)</label>
+              <input v-model="form.id_number" type="text" placeholder="CI Number" class="form-input-custom" />
+            </div>
           </div>
         </div>
 
-        <!-- Submit -->
-        <button :disabled="isLoading"
-                class="group relative w-full flex justify-center py-5 px-4 border border-transparent
-                       text-lg font-bold rounded-3xl text-white bg-indigo-600 hover:bg-indigo-700
-                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
-                       transition-all shadow-xl shadow-indigo-200 disabled:opacity-50">
-          <span v-if="isLoading">Updating...</span>
-          <span v-else>Update Student</span>
-        </button>
+        <div class="mt-8 pt-8 border-t border-gray-100">
+          <h3 class="text-xs font-black text-indigo-500 uppercase tracking-widest ml-1 mb-4">Security</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="relative">
+              <input 
+                :type="showPassword ? 'text' : 'password'" 
+                v-model="form.password" 
+                placeholder="New Password (min 8 chars)" 
+                class="form-input-custom pr-12"
+                :class="{'ring-2 ring-red-300': form.password && form.password.length < 8}"
+              />
+              <button type="button" @click="showPassword = !showPassword" class="absolute right-4 top-4 text-gray-400 hover:text-indigo-600">
+                <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                </svg>
+              </button>
+              <p v-if="form.password && form.password.length < 8" class="text-[10px] text-red-500 mt-2 ml-2 font-bold uppercase">Too short!</p>
+              <p v-else class="text-[10px] text-gray-400 mt-2 ml-2 italic">Leave blank to keep current password.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-10 flex gap-4">
+          <button type="submit" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100">
+            Update Student Info
+          </button>
+          <router-link :to="{ name: 'students.index' }" class="px-8 py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold hover:bg-gray-200 transition">
+            Cancel
+          </router-link>
+        </div>
       </form>
     </div>
   </div>
 </template>
 
-
-     
-
-
-     
-
 <script setup>
-import { ref, reactive, onMounted } from "vue"
-import { useRoute, useRouter } from "vue-router"
-import axios from "axios"
+import { ref, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import axios from "axios";
+import Swal from "sweetalert2";
 
-const route = useRoute()
-const router = useRouter()
-const isLoading = ref(false)
-const validationErrors = ref({})
-const picturePreview = ref(null)
-const careers = ref([])
+const route = useRoute();
+const router = useRouter();
+const careers = ref([]);
+const loading = ref(true);
+const photoPreview = ref(null);
+const currentPicture = ref(null);
+const showPassword = ref(false);
 
-const form = reactive({
-  id: null,
-  name: "",
-  email: "",
-  role: "",
-  picture: null,   // ✅ only used for new uploads
-  career_id: "",
-  semester: 1,
-})
+const form = ref({
+  name: "", lastname: "", email: "", career_id: "",
+  semester: "", saga_code: "", id_number: "",
+  picture: null, password: ""
+});
 
-const handlePicture = (event) => {
-  const file = event.target.files[0]
-  form.picture = file
-  // ✅ Show immediate preview if new file selected
-  picturePreview.value = file ? URL.createObjectURL(file) : picturePreview.value
-}
+const handleFileUpload = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    form.value.picture = file;
+    photoPreview.value = URL.createObjectURL(file);
+  }
+};
 
-const loadStudent = async () => {
-  const response = await axios.get(`/api/students/${route.params.id}`)
-  Object.assign(form, response.data)
-  form.id = response.data.id
+const fetchData = async () => {
+  try {
+    const [careerRes, studentRes] = await Promise.all([
+      axios.get("/api/careers"),
+      axios.get(`/api/students/${route.params.id}`)
+    ]);
+    careers.value = careerRes.data;
+    const data = studentRes.data;
+    currentPicture.value = data.picture;
+    form.value = {
+      name: data.name, lastname: data.lastname, email: data.email,
+      career_id: data.student?.career_id || "",
+      semester: data.student?.semester || 1,
+      saga_code: data.student?.saga_code || "",
+      id_number: data.student?.id_number || "",
+      picture: null, password: ""
+    };
+  } catch (error) {
+    Swal.fire("Error", "Could not load data", "error");
+  } finally {
+    loading.value = false;
+  }
+};
 
-  // ✅ Use full URL directly for preview
-  if (response.data.picture) {
-    picturePreview.value = response.data.picture
+const updateStudent = async () => {
+  // Validation check
+  if (form.value.password && form.value.password.length < 8) {
+    Swal.fire("Wait!", "Password must be 8+ characters", "warning");
+    return;
   }
 
-  // ✅ Reset form.picture so it's only used for new uploads
-  form.picture = null
-}
-
-const submit = async () => {
-  if (isLoading.value) return
-  isLoading.value = true
-  validationErrors.value = {}
+  const data = new FormData();
+  data.append("_method", "PUT");
+  Object.keys(form.value).forEach(key => {
+    if (form.value[key] !== null && form.value[key] !== "") {
+        data.append(key, form.value[key]);
+    }
+  });
 
   try {
-    const formData = new FormData()
-    Object.keys(form).forEach((key) => {
-      if (key === "id") return
-      // ✅ Only append picture if it's a File
-      if (key === "picture" && !(form.picture instanceof File)) return
-      formData.append(key, form[key])
-    })
-
-    await axios.post(`/api/students/${form.id}?_method=PUT`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    })
-
-    // ✅ Redirect to index after update
-    router.push({ name: "students.index" })
+    await axios.post(`/api/students/${route.params.id}`, data, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+    Swal.fire("Success", "Student updated!", "success");
+    router.push({ name: "students.index" });
   } catch (error) {
-    if (error.response?.data?.errors) {
-      validationErrors.value = error.response.data.errors
-    }
-  } finally {
-    isLoading.value = false
+    Swal.fire("Error", error.response?.data?.message || "Check inputs", "error");
   }
-}
+};
 
-onMounted(async () => {
-  await loadStudent()
-  const { data } = await axios.get("/api/careers")
-  careers.value = data
-})
+onMounted(fetchData);
 </script>
 
-
-
-
+<style scoped>
+.form-input-custom {
+  @apply w-full border-none bg-gray-50 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-400 font-bold text-gray-700 placeholder-gray-300 transition-all;
+}
+</style>
