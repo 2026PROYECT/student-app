@@ -2,6 +2,16 @@ import { ref, reactive, inject } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 
+// --- IMPORTANTE: El objeto user debe estar FUERA de la función ---
+// Esto lo convierte en un estado global que todos los componentes comparten.
+const user = reactive({
+    name: "",
+    lastname: "",
+    email: "",
+    role: "",
+    isAdmin: false,
+});
+
 export default function useAuth() {
     const processing = ref(false);
     const validationErrors = ref({});
@@ -14,94 +24,88 @@ export default function useAuth() {
         remember: false,
     });
 
-    const user = reactive({
-        name: "",
-        lastname: "", // Added to match your user profile
-        email: "",
-        role: "",     // Added for role-based logic
-        isAdmin: false,
-    });
-
     const loginUser = (data) => {
-        // 1. Update the reactive user object
-        user.name = data.name;
-        user.lastname = data.lastname;
-        user.email = data.email;
-        user.role = data.role;
-        user.isAdmin = data.role === 'admin' || data.is_admin === true;
+        // 1. Normalización del rol
+        const roleFromServer = data.role ? data.role.trim().toLowerCase() : 'student';
 
-        // 2. Persist to localStorage for Route Guards
+        // 2. Actualizamos el estado reactivo GLOBAL
+        user.name = data.name;
+        user.lastname = data.lastname || ""; // Añadido para que no salga undefined
+        user.email = data.email;
+        user.role = roleFromServer; 
+        user.isAdmin = (roleFromServer === 'admin');
+
+        // 3. Persistencia
         localStorage.setItem("loggedIn", JSON.stringify(true));
         localStorage.setItem("user_data", JSON.stringify(data));
 
-        // 3. Role-Based Redirect
-        // Only redirect if we are currently on the login page
+        // 4. Redirección
         if (router.currentRoute.value.name === 'login') {
-            if (user.isAdmin) {
-                router.push({ name: "assignments.index" });
-            } else {
-                router.push({ name: "attend.index" });
-            }
+            const destination = user.isAdmin ? "admin.dashboard" : "student.dashboard";
+            router.push({ name: destination });
         }
     };
 
     const submitLogin = async () => {
         if (processing.value) return;
-
         processing.value = true;
         validationErrors.value = {};
 
         try {
-            await axios.get("/sanctum/csrf-cookie");
-            await axios.post("/login", loginForm);
-            const response = await axios.get("/api/user");
-            loginUser(response.data);
+            // Aseguramos CSRF si usas Sanctum
+            await axios.get('/sanctum/csrf-cookie');
+            
+            const response = await axios.post('/api/v1/login', loginForm);
+            const token = response.data.token;
+            
+            localStorage.setItem('auth_token', token);
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+            // Obtenemos info del usuario desde la ruta correcta v1
+            const userResponse = await axios.get('/api/v1/user');
+            loginUser(userResponse.data);
+
         } catch (error) {
-            if (error.response?.data?.errors) {
+            if (error.response?.status === 422) {
                 validationErrors.value = error.response.data.errors;
-            } else if (error.response?.status === 401) {
-                swal({
-                    icon: "error",
-                    title: "Access Denied",
-                    text: "Invalid email or password.",
-                });
             }
+            console.error("Error en el login:", error);
         } finally {
             processing.value = false;
         }
     };
 
     const logout = async () => {
-        if (processing.value) return;
-        processing.value = true;
-
         try {
-            await axios.post("/logout");
-            // Clean up localStorage
-            localStorage.removeItem("loggedIn");
-            localStorage.removeItem("user_data");
+            await axios.post("/api/v1/logout");
+        } catch (error) {
+            console.error("Logout error", error);
+        } finally {
+            // Limpieza total
+            localStorage.clear();
+            delete axios.defaults.headers.common['Authorization'];
             
-            // Reset reactive state
             user.name = "";
+            user.lastname = "";
             user.role = "";
             user.isAdmin = false;
 
-            router.push({ name: "login" });
-        } catch (error) {
-            console.error("Logout failed", error);
-        } finally {
-            processing.value = false;
+            window.location.href = "/login"; // Fuerza limpieza de memoria
         }
     };
 
     const getUser = async () => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
         try {
-            const response = await axios.get("/api/user");
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            const response = await axios.get("/api/v1/user");
             loginUser(response.data);
         } catch (error) {
             if (error.response?.status === 401) {
-                localStorage.removeItem("loggedIn");
-                localStorage.removeItem("user_data");
+                localStorage.clear();
+                router.push({ name: "login" });
             }
         }
     };
@@ -111,7 +115,7 @@ export default function useAuth() {
         validationErrors,
         processing,
         submitLogin,
-        user,
+        user, // Ahora este 'user' es el mismo para todos
         logout,
         getUser,
     };

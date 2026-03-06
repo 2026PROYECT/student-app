@@ -35,19 +35,22 @@ class AuthController extends Controller
         ]);
     }
     public function login(LoginRequest $request)
-    {
-        $request->authenticate();
-        $user = $request->user();
-        $token = $user->createToken('app');
+{
+    $user = User::where('email', $request->email)->first();
 
+    if (! $user || ! Hash::check($request->password, $user->password)) {
         return response()->json([
-            'user' => $user->name,
-            'access_token' => $token->accessToken,
-            'token_type' => 'Bearer',
-            'expires' => Carbon::parse($token->token->expires_at)->format('Y-m-d H:i:s')
-        ]);
+            'errors' => ['email' => ['Las credenciales son incorrectas.']]
+        ], 422);
     }
 
+    // IMPORTANTE: Asegúrate de que el objeto $user que se devuelve 
+    // es el que acabamos de traer de la base de datos.
+    return response()->json([
+        'user' => $user, 
+        'token' => $user->createToken('auth_token')->plainTextToken,
+    ]);
+}
     /**
      * Destroy an authenticated session.
      */

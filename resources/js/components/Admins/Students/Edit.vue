@@ -34,6 +34,7 @@
             <div class="grid grid-cols-2 gap-4">
               <input v-model="form.name" type="text" placeholder="First Name" class="form-input-custom" />
               <input v-model="form.lastname" type="text" placeholder="Last Name" class="form-input-custom" />
+              <input v-model="form.surname" type="text" placeholder="Surname" class="form-input-custom" />
             </div>
             <input v-model="form.email" type="email" placeholder="Email" class="form-input-custom" />
           </div>
@@ -121,7 +122,7 @@ const currentPicture = ref(null);
 const showPassword = ref(false);
 
 const form = ref({
-  name: "", lastname: "", email: "", career_id: "",
+  name: "", lastname: "", surname: "", email: "", career_id: "",
   semester: "", saga_code: "", id_number: "",
   picture: null, password: ""
 });
@@ -137,14 +138,14 @@ const handleFileUpload = (e) => {
 const fetchData = async () => {
   try {
     const [careerRes, studentRes] = await Promise.all([
-      axios.get("/api/careers"),
-      axios.get(`/api/students/${route.params.id}`)
+      axios.get("/api/v1/careers"),
+      axios.get(`/api/v1/students/${route.params.id}`)
     ]);
     careers.value = careerRes.data;
     const data = studentRes.data;
     currentPicture.value = data.picture;
     form.value = {
-      name: data.name, lastname: data.lastname, email: data.email,
+      name: data.name, lastname: data.lastname, surname: data.surname, email: data.email,
       career_id: data.student?.career_id || "",
       semester: data.student?.semester || 1,
       saga_code: data.student?.saga_code || "",
@@ -174,7 +175,7 @@ const updateStudent = async () => {
   });
 
   try {
-    await axios.post(`/api/students/${route.params.id}`, data, {
+    await axios.post(`/api/v1/students/${route.params.id}`, data, {
       headers: { "Content-Type": "multipart/form-data" }
     });
     Swal.fire("Success", "Student updated!", "success");

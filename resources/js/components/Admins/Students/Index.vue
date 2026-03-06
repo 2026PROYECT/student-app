@@ -7,6 +7,16 @@
           <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Student Directory</h1>
           <p class="text-gray-500 mt-1">Manage student enrollments and career details.</p>
         </div>
+        <div class="flex gap-3">
+        <button 
+          @click="generatePDF" 
+          class="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-xl font-bold hover:bg-red-100 transition shadow-sm border border-red-100"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Export PDF
+        </button>
         <router-link :to="{ name: 'students.create' }" 
           class="inline-flex items-center justify-center px-6 py-3 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -14,11 +24,12 @@
           </svg>
           Add Student
         </router-link>
+        </div>
       </div>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
         <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Students</p>
-        <p class="text-2xl font-black text-indigo-600">{{ students.total || 0 }}</p>
+        <p class="text-2xl font-black text-indigo-600">{{ students?.total || 0 }}</p>
     </div>
     </div>
       <div class="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 mb-6">
@@ -108,7 +119,7 @@
       </td>
     </tr>
 
-    <tr v-if="students.data.length === 0">
+    <tr v-if="students.data?.length === 0">
       <td colspan="4" class="px-6 py-10 text-center text-gray-400">No students found.</td>
     </tr>
   </template>
@@ -136,15 +147,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue"; // Added watch
+import { ref, onMounted, watch } from "vue";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { TailwindPagination } from 'laravel-vue-pagination';
-import debounce from 'lodash/debounce'; // Optional but recommended
+import debounce from 'lodash/debounce';
 
 const search = ref("");
-const loading = ref(true); // Track loading state
-const students = ref({ data: [], total: 0 });
+const loading = ref(true);
+const students = ref({
+    data: [],
+    current_page: 1,
+    last_page: 1,
+    total: 0
+});
 
 const selectedImage = ref(null);
 
@@ -155,65 +171,110 @@ const openImage = (path) => {
 const closeImage = () => {
     selectedImage.value = null;
 };
+const generatePDF = async () => {
+    Swal.fire({
+        title: 'Generando PDF...',
+        text: 'Por favor espere',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
+    try {
+        const response = await axios.get('/api/v1/reports/students', {
+            responseType: 'blob' // Indica que esperamos un archivo
+        });
+
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Reporte_Estudiantes_${new Date().toLocaleDateString()}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        
+        Swal.close();
+    } catch (error) {
+        console.error(error);
+        Swal.fire('Error', 'No se pudo generar el reporte', 'error');
+    }
+};
 /**
- * Fetch students from the API
+ * Obtener estudiantes de la API
  */
 const getStudents = async (page = 1) => {
     loading.value = true;
     try {
-        const response = await axios.get(`/api/students`, {
-    params: { page, search: search.value, role: 'student' }
-});
-        // This now expects the paginated response from UserController@index
+        // CORRECCIÓN: v1 en minúsculas para coincidir con api.php
+        const response = await axios.get(`/api/v1/students`, {
+            params: { 
+                page, 
+                search: search.value, 
+                role: 'student' 
+            }
+        });
+        
+        console.log("Datos recibidos:", response.data);
         students.value = response.data; 
     } catch (error) {
         console.error("Fetch Error:", error);
-        Swal.fire('Error', 'Could not load student data', 'error');
+        // Si no es un 401 (que ya maneja tu interceptor), mostramos alerta
+        if (error.response?.status !== 401) {
+            Swal.fire('Error', 'No se pudo cargar la lista de estudiantes', 'error');
+        }
     } finally {
         loading.value = false;
     }
 };
 
-
-
 /**
- * Debounced search: Waits 300ms after user stops typing 
- * to prevent excessive API calls.
+ * Búsqueda con debounce (300ms)
  */
 const performSearch = debounce(() => {
-    getStudents(1);
+    getStudents(1); // Siempre vuelve a la página 1 al buscar
 }, 300);
 
 /**
- * Delete a student (and their linked user account)
+ * Eliminar estudiante
  */
 const confirmDelete = async (id) => {
     const result = await Swal.fire({
-        title: 'Are you sure?',
-        text: "This will delete the user account and their student profile.",
+        title: '¿Estás seguro?',
+        text: "Se eliminará el usuario y su perfil de estudiante.",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#4f46e5',
         cancelButtonColor: '#ef4444',
-        confirmButtonText: 'Yes, delete everything!'
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true
     });
 
     if (result.isConfirmed) {
         try {
-            await axios.delete(`/api/students/${id}`);
-            // Refresh list
-            getStudents(students.value.current_page);
-            Swal.fire('Deleted!', 'Student record removed.', 'success');
+            await axios.delete(`/api/v1/students/${id}`);
+            
+            // Lógica inteligente: Si borro el último de la página, retrocedo una
+            let page = students.value.current_page;
+            if (students.value.data.length === 1 && page > 1) {
+                page--;
+            }
+            
+            getStudents(page);
+            
+            Swal.fire({
+                title: '¡Eliminado!',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
         } catch (error) {
-            Swal.fire('Error', 'Could not delete student.', 'error');
+            Swal.fire('Error', 'No se pudo completar la eliminación', 'error');
         }
     }
 };
 
-// Initial Load
 onMounted(() => getStudents());
 
-// Watch the search ref and trigger the debounced search
+// Escuchar cambios en la búsqueda
 watch(search, () => {
     performSearch();
 });

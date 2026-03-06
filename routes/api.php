@@ -9,58 +9,53 @@ use App\Http\Controllers\Api\V1\QuestionController;
 use App\Http\Controllers\Api\V1\QuizAssignmentController;
 use App\Http\Controllers\Api\V1\QuestionResultController;
 use App\Http\Controllers\Api\V1\StudentQuizController;
+
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| API v1 Routes
 |--------------------------------------------------------------------------
 */
 
-// User info route
-Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-// v1 Public Routes
-Route::prefix('v1')->middleware('guest')->group(function () {
-    Route::post('/login', [AuthController::class, 'login']);
-});
-
-// v1 JWT Protected Routes (if still using Passport/JWT for some parts)
-Route::prefix('v1')->middleware('auth:api')->group(function () {
-    Route::post('/logout', [AuthController::class, 'destroy']);
-    Route::apiResource('quizzes', QuizController::class);
-    Route::apiResource('questions', QuestionController::class);
-});
-
-// SPA -- Sanctum Token Protected Routes
-Route::middleware('auth:sanctum')->group(function () {
-    
-    // ✅ STUDENTS: Using apiResource covers index, store, show, update, destroy
-    // This fixed the 500 error and the "Total 0" count
-    Route::apiResource('students', UserController::class);
-    
-    // QUIZ ASSIGNMENTS
-    Route::apiResource('quiz-assignments', QuizAssignmentController::class);
-    
-    // QUIZZES & QUESTIONS
-    Route::apiResource('quizzes', QuizController::class);
-    
-    Route::get('careers', function() {
-    return \App\Models\Career::all();
-});
+Route::prefix('v1')->group(function () {
 
 
-Route::middleware('auth:sanctum')->group(function () {
-    // Student Exam Portal Routes
-    Route::get('/student/check-status', [StudentQuizController::class, 'checkStatus']);
-    Route::post('/student/generate-quiz', [StudentQuizController::class, 'generateQuiz']);
-});
+Route::get('reports/students', [ReportController::class, 'exportStudents']);
+    // --- RUTAS PÚBLICAS ---
+    Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
 
-    // For Questions, we use apiResource + the custom "all" route
-    Route::get('questions/all', [QuestionController::class, 'all']);
-    Route::apiResource('questions', QuestionController::class);
+    // --- RUTAS PROTEGIDAS (Sanctum) ---
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('careers', [App\Http\Controllers\Api\V1\CareerController::class, 'index']);
 
-    // RESULTS & ATTENDANCE
-    Route::post('/attend/{quizId}', [QuestionResultController::class, 'attendQuiz']);
-    Route::get('/results/{quizId}', [QuestionResultController::class, 'getResults']);
+        // Info del usuario actual
+        Route::get('/user', function (Request $request) {
+            return $request->user();
+        });
+
+        Route::post('/logout', [AuthController::class, 'destroy']);
+
+        // --- ADMINISTRACIÓN (CRUDs) ---
+        Route::apiResource('students', UserController::class);
+        Route::apiResource('quizzes', QuizController::class);
+        Route::apiResource('quiz-assignments', QuizAssignmentController::class);
+        
+        // Configuración de preguntas (Ruta específica antes del resource)
+        Route::get('questions/all', [QuestionController::class, 'all']);
+        Route::apiResource('questions', QuestionController::class);
+
+        // --- CATÁLOGOS ---
+        
+       // });
+
+        // --- PORTAL DEL ESTUDIANTE (Exámenes) ---
+        Route::prefix('student')->group(function () {
+            Route::get('/check-status', [StudentQuizController::class, 'checkStatus']);
+            Route::post('/generate-quiz', [StudentQuizController::class, 'generateQuiz']);
+            
+            // Acciones de examen y resultados
+            Route::post('/attend/{quizId}', [QuestionResultController::class, 'attendQuiz']);
+            Route::get('/results/{quizId}', [QuestionResultController::class, 'getResults']);
+        });
+
+    });
 });

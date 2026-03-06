@@ -1,13 +1,13 @@
-import { ref, inject } from "vue";
 import { useRouter } from "vue-router";
+import axios from "axios";
 
 export default function useQuiz() {
-    const quizzes = ref({});
-    const router = useRouter();
-    const validationErrors = ref({});
-    const isLoading = ref(false);
+    const quizzes = ref({ data: [] });
     const quiz = ref({});
     const results = ref({});
+    const validationErrors = ref({});
+    const isLoading = ref(false);
+    const router = useRouter();
     const swal = inject("$swal");
 
     const getQuizzes = async (
@@ -15,106 +15,35 @@ export default function useQuiz() {
         order_column = "quiz_date",
         order_direction = "desc"
     ) => {
-        axios
-            .get(
-                "/api/quizzes?page=" +
-                    page +
-                    "&order_column=" +
-                    order_column +
-                    "&order_direction=" +
-                    order_direction
-            )
-            .then((response) => {
-                quizzes.value = response.data.data;
-            });
-    };
-
-    const getQuiz = async (id) => {
-        axios.get("/api/quizzes/" + id).then((response) => {
-            quiz.value = response.data.data;
-        });
-    };
-
-    const storeQuiz = async (quiz) => {
-        if (isLoading.value) return;
         isLoading.value = true;
-        validationErrors.value = {};
-        axios
-            .post("/api/quizzes/", quiz)
-            .then((response) => {
-                router.push({ name: "quiz.index" });
-                swal({
-                    icon: "success",
-                    title: "Data saved successfully",
-                });
-            })
-            .catch((error) => {
-                if (error.response?.data) {
-                    validationErrors.value = error.response.data.errors;
-                    isLoading.value = false;
-                }
+        try {
+            const response = await axios.get("/api/v1/quizzes", {
+                params: { page, order_column, order_direction }
             });
-    };
-
-    const updateQuiz = async (quiz) => {
-        if (isLoading.value) return;
-
-        isLoading.value = true;
-        validationErrors.value = {};
-
-        axios
-            .put("/api/quizzes/" + quiz.id, quiz)
-            .then((response) => {
-                router.push({ name: "quiz.index" });
-                swal({
-                    icon: "success",
-                    title: "Data saved successfully",
-                });
-            })
-            .catch((error) => {
-                if (error.response?.data) {
-                    validationErrors.value = error.response.data.errors;
-                }
-            })
-            .finally(() => (isLoading.value = false));
+            quizzes.value = response.data;
+        } catch (error) {
+            console.error("Error fetching quizzes:", error);
+        } finally {
+            isLoading.value = false;
+        }
     };
 
     const deleteQuiz = async (id) => {
         swal({
             title: "Are you sure?",
-            text: "You won't be able to revert this action!",
+            text: "You won't be able to revert this!",
             icon: "warning",
-            showCancelButton: false,
+            showCancelButton: true,
             confirmButtonText: "Yes, delete it!",
             confirmButtonColor: "#ef4444",
-            timer: 5000,
-            timerProgressBar: true,
-            reverseButtons: true,
         }).then((result) => {
             if (result.isConfirmed) {
-                axios
-                    .delete("/api/quizzes/" + id)
-                    .then((response) => {
+                axios.delete("/api/v1/quizzes/" + id)
+                    .then(() => {
                         getQuizzes();
-                        router.push({ name: "quiz.index" });
-                        swal({
-                            icon: "success",
-                            title: "Data deleted successfully",
-                        });
-                    })
-                    .catch((error) => {
-                        swal({
-                            icon: "error",
-                            title: "Something went wrong",
-                        });
+                        swal({ icon: "success", title: "Deleted!" });
                     });
             }
-        });
-    };
-
-    const getResult = async (id) => {
-        axios.get("/api/results/" + id).then((response) => {
-            results.value = response.data;
         });
     };
 
@@ -125,10 +54,6 @@ export default function useQuiz() {
         validationErrors,
         isLoading,
         getQuizzes,
-        getQuiz,
-        storeQuiz,
-        updateQuiz,
         deleteQuiz,
-        getResult,
     };
 }

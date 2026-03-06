@@ -111,7 +111,7 @@ let debounceTimer = null;
 const fetchAdmins = async (page = 1) => {
     try {
         // We call our dynamic UserController with role=admin
-        const response = await axios.get('/api/students', {
+        const response = await axios.get('/api/v1/students', {
             params: { 
                 role: 'admin', 
                 search: searchQuery.value,
@@ -159,7 +159,7 @@ const deleteAdmin = async (id) => {
 
     if (result.isConfirmed) {
         try {
-            await axios.delete(`/api/students/${id}`);
+            await axios.delete(`/api/v1/students/${id}`);
             Swal.fire('Deleted!', 'Administrator has been removed.', 'success');
             fetchAdmins();
         } catch (error) {

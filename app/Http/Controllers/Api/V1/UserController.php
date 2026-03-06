@@ -127,6 +127,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name'      => 'required|string|max:255',
             'lastname'  => 'required|string|max:255',
+            'surname'   => 'nullable|string|max:255',
             'email'     => ['required', 'email', Rule::unique('users')->ignore($student->id)],
             'career_id' => 'required_if:role,student|exists:careers,id',
             'semester'  => 'required_if:role,student|integer|between:1,10',
@@ -138,6 +139,7 @@ class UserController extends Controller
             $student->update([
                 'name'     => $validated['name'],
                 'lastname' => $validated['lastname'],
+                'surname'  => $validated['surname'],
                 'email'    => $validated['email'],
             ]);
 

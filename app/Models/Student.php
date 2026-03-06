@@ -9,15 +9,16 @@ class Student extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-  protected $fillable = [
-    'user_id', 'career_id', 'semester', 'saga_code', 'id_number',
-];
+    protected $fillable = [
+        'user_id',
+        'career_id',
+        'semester',
+        'saga_code',
+        'id_number',
+    ];
 
     /**
-     * Relationship: A Student profile belongs to a User.
+     * Relación: Un registro de estudiante pertenece a un Usuario.
      */
     public function user()
     {
@@ -25,7 +26,7 @@ class Student extends Model
     }
 
     /**
-     * Relationship: A Student belongs to a Career.
+     * Relación: Un estudiante pertenece a una Carrera.
      */
     public function career()
     {
